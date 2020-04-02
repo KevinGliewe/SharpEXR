@@ -81,7 +81,7 @@ class Build : NukeBuild
                 version = "git tag".Sh().Split('\n').Get(-2).ExtractVersion();
             } catch {}
 
-            var commitIndex = "11";// "git rev-list --count HEAD".Sh().Replace("\n", "").Trim();
+            var commitIndex = "git rev-list --count HEAD".Sh().Replace("\n", "").Trim();
 
             Log.Info("Repo version:" + version + "." + commitIndex);
 
