@@ -1,17 +1,16 @@
-﻿using SharpEXR;
-using SharpEXR.ColorSpace;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-namespace EXRViewer {
-    class Program {
+namespace SharpEXR.Viewer.Forms {
+    static class Program {
+
+        [STAThread]
         static void Main() {
             var args = CommandLineArguments.Parse();
 

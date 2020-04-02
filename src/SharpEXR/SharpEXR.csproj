@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+      <VersionPrefix>1.0.0</VersionPrefix>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <DefineConstants>DOTNET</DefineConstants>
+
+    <Authors>Emma Maassen, Kevin Gliewe</Authors>
+    <Company>Gliewe.Net</Company>
+    <Description>C# implementation of OpenEXR file format</Description>
+    <RepositoryUrl>https://github.com/KevinGliewe/SharpEXR</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/KevinGliewe/SharpEXR</PackageProjectUrl>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/Enichan/sharpexr/master/LICENSE</PackageLicenseUrl>
+    <PackageTags>Imageformat;HDR;EXR;OpenEXR</PackageTags>
+    <PackageIconUrl>https://www.openexr.com/images/exr_logo2.jpg</PackageIconUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+</Project>

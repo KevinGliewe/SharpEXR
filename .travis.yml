@@ -1,0 +1,7 @@
+language: csharp
+dotnet: 3.1.102
+git:
+  depth: false
+script:
+    - chmod +x ./build.sh
+    - ./build.sh Publish --ApiKey $NUGET_API_KEY

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SharpEXR.Viewer.HTML": {
+      "commandName": "Project",
+      "commandLineArgs": "purplemonkey.exr"
+    }
+  }
+}
