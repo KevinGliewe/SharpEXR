@@ -1,4 +1,10 @@
-# SharpEXR
+
+# <img src="https://www.openexr.com/images/exr_logo2.jpg" height="32"> SharpEXR
+
+[![Build Status](https://travis-ci.com/KevinGliewe/SharpEXR.svg?branch=master)](https://travis-ci.com/KevinGliewe/SharpEXR)
+[![NuGet Package](https://img.shields.io/nuget/v/SharpEXR.svg)](https://www.nuget.org/packages/SharpEXR)
+
+
 
 C# implementation of OpenEXR file format, a high dynamic range imaging image file format created by Industrial Light and Magic (ILM).
 

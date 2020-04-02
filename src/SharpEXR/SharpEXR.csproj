@@ -12,9 +12,9 @@
     <Description>C# implementation of OpenEXR file format</Description>
     <RepositoryUrl>https://github.com/KevinGliewe/SharpEXR</RepositoryUrl>
     <PackageProjectUrl>https://github.com/KevinGliewe/SharpEXR</PackageProjectUrl>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/Enichan/sharpexr/master/LICENSE</PackageLicenseUrl>
+    <license>https://raw.githubusercontent.com/Enichan/sharpexr/master/LICENSE</license>
     <PackageTags>Imageformat;HDR;EXR;OpenEXR</PackageTags>
-    <PackageIconUrl>https://www.openexr.com/images/exr_logo2.jpg</PackageIconUrl>
+    <icon>https://www.openexr.com/images/exr_logo2.jpg</icon>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
