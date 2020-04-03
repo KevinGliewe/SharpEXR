@@ -93,7 +93,7 @@ class Build : NukeBuild
                     .SetConfiguration(Configuration)
                     .SetOutputDirectory(ArtifactsDirectory)
                     .SetVersion(version + "." + commitIndex)
-                    .SetPackageReleaseNotes(File.ReadAllText(ReadmeFile))
+                    // .SetPackageReleaseNotes(File.ReadAllText(ReadmeFile))
                     );
         });
 
