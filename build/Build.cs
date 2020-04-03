@@ -1,6 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.IO;
 using System.Text.RegularExpressions;
 using GCore.Extensions.ArrayEx;
 using GCore.Extensions.StringShEx;
@@ -92,7 +93,7 @@ class Build : NukeBuild
                     .SetConfiguration(Configuration)
                     .SetOutputDirectory(ArtifactsDirectory)
                     .SetVersion(version + "." + commitIndex)
-                    .SetPackageReleaseNotes(ReadmeFile)
+                    .SetPackageReleaseNotes(File.ReadAllText(ReadmeFile))
                     );
         });
 
