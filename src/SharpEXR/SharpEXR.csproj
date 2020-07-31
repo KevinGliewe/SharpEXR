@@ -14,7 +14,7 @@
     <PackageProjectUrl>https://github.com/KevinGliewe/SharpEXR</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/Enichan/sharpexr/master/LICENSE</PackageLicenseUrl>
     <PackageTags>Imageformat;HDR;EXR;OpenEXR</PackageTags>
-    <PackageIconUrl>https://raw.githubusercontent.com/kevingliewe/SharpEXR/master/doc/icon.jpg</PackageIconUrl>
+    <PackageIconUrl>https://raw.githubusercontent.com/KevinGliewe/SharpEXR/master/doc/logo.jpg</PackageIconUrl>
     <RepositoryUrl>https://github.com/KevinGliewe/SharpEXR<</RepositoryUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>

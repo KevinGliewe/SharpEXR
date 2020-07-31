@@ -1,5 +1,5 @@
 
-# <img src="https://raw.githubusercontent.com/kevingliewe/SharpEXR/master/doc/icon.jpg" height="32"> SharpEXR
+# <img src="https://raw.githubusercontent.com/KevinGliewe/SharpEXR/master/doc/logo.jpg" height="32"> SharpEXR
 
 [![Build Status](https://travis-ci.com/KevinGliewe/SharpEXR.svg?branch=master)](https://travis-ci.com/KevinGliewe/SharpEXR)
 [![NuGet Package](https://img.shields.io/nuget/v/SharpEXR.svg)](https://www.nuget.org/packages/SharpEXR)
