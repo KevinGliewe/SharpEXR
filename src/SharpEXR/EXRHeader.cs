@@ -86,9 +86,13 @@ namespace SharpEXR {
         public PartType Type {
             get {
                 PartType type;
-                if (!TryGetAttribute<PartType>("type", out type)) {
+
+                String attributeValue;
+                if (!TryGetAttribute<string>("type", out attributeValue)) {
                     throw new EXRFormatException("Invalid or corrupt EXR header: Missing type attribute.");
                 }
+                if (!Enum.TryParse<PartType>(attributeValue, true, out type))
+                    type = PartType.ScanLine;
                 return type;
             }
         }

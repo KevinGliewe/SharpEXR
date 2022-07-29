@@ -1,9 +1,11 @@
-﻿using SharpEXR.AttributeTypes;
+﻿using Ionic.Zlib;
+using SharpEXR.AttributeTypes;
 using SharpEXR.ColorSpace;
 using SharpEXR.Compression;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -607,53 +609,91 @@ namespace SharpEXR {
             ReadPixelData(reader);
         }
 
-        private void ReadPixelBlock(IEXRReader reader, uint offset, int linesPerBlock, List<Channel> sortedChannels) {
+        private void ReadZIPCompressedPixelBlock(IEXRReader reader, uint offset, int linesPerBlock, List<Channel> sortedChannels)
+        {
             reader.Position = (int)offset;
 
-            if (Version.IsMultiPart) {
+            if (Version.IsMultiPart)
+            {
                 // we don't use this. should we? i dunno. probably not
-                reader.ReadUInt32(); reader.ReadUInt32();
+                // Change for multipart : not sure why 8 bytes are read here earlier.
+                reader.ReadUInt32();
+                //reader.ReadUInt32();
             }
 
-            var startY = reader.ReadInt32();
+            var startY = reader.ReadInt32() - DataWindow.YMin;
             var endY = Math.Min(DataWindow.Height, startY + linesPerBlock);
             var startIndex = startY * DataWindow.Width;
 
             var dataSize = reader.ReadInt32();
 
-            if (Header.Compression != EXRCompression.None) {
+            byte[] compressedSource = reader.ReadBytes(dataSize);
+            byte[] unpackedContent = ZlibStream.UncompressBuffer(compressedSource);
+
+            // ZIP Decompression from OPEN EXR C++ library
+            // First step reconstruction
+            for (int i = 1; i < unpackedContent.Length; ++i)
+            {
+                int reconstructedScaler = (int)unpackedContent[i - 1] + (int)unpackedContent[i] - 128;
+                unpackedContent[i] = (byte)reconstructedScaler;
+            }
+
+            // Second Step interleaving
+            byte[] interleavedData = new byte[unpackedContent.Length];
+            for (int i = 0; i < unpackedContent.Length/2; ++i)
+            { 
+                interleavedData[i*2] = unpackedContent[i];
+                interleavedData[i*2 + 1] = unpackedContent[(i + (unpackedContent.Length + 1) / 2)];
+            }
+
+            // Finally segregating channels.
+            byte[] channelSortedData = new byte[unpackedContent.Length];
+            var pixelsPerChannelPerScanLine = interleavedData.Length / (sortedChannels.Count * (endY - startY)) ;
+            var pixelsPerScanLine = interleavedData.Length / (endY - startY);
+            
+            int index = 0;
+
+            for (int i = 0; i < sortedChannels.Count && index < interleavedData.Length ;  ++i)
+            {
+                for (int j = 0; j < (endY - startY) && index < interleavedData.Length; ++j)
+                {
+                    Array.Copy(interleavedData, i * pixelsPerChannelPerScanLine + j * pixelsPerScanLine, channelSortedData, index, pixelsPerChannelPerScanLine);
+                    index = index + pixelsPerChannelPerScanLine;
+                }
+            }
+
+          
+            if(channelSortedData.Length <= 0)
+                return;
+
+            MemoryStream memoryStream = new MemoryStream(channelSortedData);
+            IEXRReader binaryReader = new EXRReader(memoryStream);
+            PopulateChannels(binaryReader, startY, endY, startIndex, sortedChannels);
+            
+        }
+
+        private void ReadPixelBlock(IEXRReader reader, uint offset, int linesPerBlock, List<Channel> sortedChannels) {
+            reader.Position = (int)offset;
+
+            if (Version.IsMultiPart) {
+                // we don't use this. should we? i dunno. probably not
+                reader.ReadUInt32(); 
+                //reader.ReadUInt32();
+            }
+
+            var startY = reader.ReadInt32() - DataWindow.YMin;
+            var endY = Math.Min(DataWindow.Height, startY + linesPerBlock);
+            var startIndex = startY * DataWindow.Width;
+
+            var dataSize = reader.ReadInt32();
+
+            if (Header.Compression != EXRCompression.None )
+            {
                 throw new NotImplementedException("Compressed images are currently not supported");
             }
 
-            foreach (var channel in sortedChannels) {
-                float[] floatArr = null;
-                Half[] halfArr = null;
+            PopulateChannels(reader,startY, endY, startIndex, sortedChannels);
 
-                if (channel.Type == PixelType.Float) {
-                    floatArr = FloatChannels[channel.Name];
-                }
-                else if (channel.Type == PixelType.Half) {
-                    halfArr = HalfChannels[channel.Name];
-                }
-                else {
-                    throw new NotImplementedException();
-                }
-
-                var index = startIndex;
-                for (int y = startY; y < endY; y++) {
-                    for (int x = 0; x < DataWindow.Width; x++, index++) {
-                        if (channel.Type == PixelType.Float) {
-                            floatArr[index] = reader.ReadSingle();
-                        }
-                        else if (channel.Type == PixelType.Half) {
-                            halfArr[index] = reader.ReadHalf();
-                        }
-                        else {
-                            throw new NotImplementedException();
-                        }
-                    }
-                }
-            }
         }
 
 #if PARALLEL
@@ -674,7 +714,11 @@ namespace SharpEXR {
 
             var actions = (from offset in Offsets select (Action)(() => {
                 var reader = createReader();
-                ReadPixelBlock(reader, offset, linesPerBlock, sortedChannels);
+                if(Header.Compression == EXRCompression.None)
+                    ReadPixelBlock(reader, offset, linesPerBlock, sortedChannels);
+                else if (Header.Compression == EXRCompression.ZIP 
+                    || Header.Compression == EXRCompression.ZIPS)
+                    ReadZIPCompressedPixelBlock(reader, offset, linesPerBlock, sortedChannels);
                 reader.Dispose();
             }));
             Parallel.Invoke(actions.ToArray());
@@ -698,8 +742,20 @@ namespace SharpEXR {
             //var actions = (from offset in Offsets select (Action)(() => {
             //}));
             //Parallel.Invoke(actions.ToArray());
-            foreach (var offset in Offsets) {
-                ReadPixelBlock(reader, offset, linesPerBlock, sortedChannels);
+
+            if (Header.Compression == EXRCompression.ZIP || Header.Compression == EXRCompression.ZIPS)
+            {
+                foreach (var offset in Offsets)
+                {
+                    ReadZIPCompressedPixelBlock(reader, offset, linesPerBlock, sortedChannels);
+                }
+            }
+            else if (Header.Compression == EXRCompression.None)
+            {
+                foreach (var offset in Offsets)
+                {
+                    ReadPixelBlock(reader, offset, linesPerBlock, sortedChannels);
+                }
             }
         }
 
@@ -715,6 +771,54 @@ namespace SharpEXR {
         public bool HasAlpha {
             get {
                 return HalfChannels.ContainsKey("A") || FloatChannels.ContainsKey("A");
+            }
+        }
+
+        private void PopulateChannels(IEXRReader reader
+                    , int startY
+                    , int endY
+                    , int startIndex
+                    , List<Channel> sortedChannels)
+        {
+            foreach (var channel in sortedChannels)
+            {
+                float[] floatArr = null;
+                Half[] halfArr = null;
+
+                if (channel.Type == PixelType.Float)
+                {
+                    floatArr = FloatChannels[channel.Name];
+                }
+                else if (channel.Type == PixelType.Half)
+                {
+                    halfArr = HalfChannels[channel.Name];
+                }
+                else
+                {
+                    throw new NotImplementedException();
+                }
+
+
+                var index = startIndex;
+                for (int y = startY; y < endY; y++)
+                {
+                    for (int x = 0; x < DataWindow.Width; x++, index++)
+                    {
+                        if (channel.Type == PixelType.Float)
+                        {
+                            floatArr[index] = reader.ReadSingle();
+                        }
+                        else if (channel.Type == PixelType.Half)
+                        {
+                            halfArr[index] = reader.ReadHalf();
+                        }
+                        else
+                        {
+                            throw new NotImplementedException();
+                        }
+                    }
+                }
+
             }
         }
     }

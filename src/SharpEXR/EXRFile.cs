@@ -34,8 +34,15 @@ namespace SharpEXR {
                         break;
                     }
                     Headers.Add(header);
+
+                    if (header.Compression != EXRCompression.ZIP
+                    && header.Compression != EXRCompression.ZIPS
+                    && header.Compression != EXRCompression.None)
+                    {
+                        throw new NotImplementedException("Multi part EXR files are currently supported for ZIP | ZIPS | NONE compression");
+                    }
                 }
-                throw new NotImplementedException("Multi part EXR files are not currently supported");
+                
             }
             else {
                 if (Version.IsSinglePartTiled) {
