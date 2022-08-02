@@ -87,6 +87,8 @@ namespace SharpEXR {
             get {
                 PartType type;
 
+                //TryGetAttribute does not support conversion of attribute to ENUM. 
+                //For quick fix we are converting the attribute to string and then Parse it in the getter.
                 String attributeValue;
                 if (!TryGetAttribute<string>("type", out attributeValue)) {
                     throw new EXRFormatException("Invalid or corrupt EXR header: Missing type attribute.");

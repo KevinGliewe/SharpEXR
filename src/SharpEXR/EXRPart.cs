@@ -609,16 +609,14 @@ namespace SharpEXR {
             ReadPixelData(reader);
         }
 
-        private void ReadZIPCompressedPixelBlock(IEXRReader reader, uint offset, int linesPerBlock, List<Channel> sortedChannels)
-        {
+        private void ReadZIPCompressedPixelBlock(IEXRReader reader, uint offset, int linesPerBlock, List<Channel> sortedChannels) {
+
             reader.Position = (int)offset;
 
-            if (Version.IsMultiPart)
-            {
+            if (Version.IsMultiPart) {
                 // we don't use this. should we? i dunno. probably not
                 // Change for multipart : not sure why 8 bytes are read here earlier.
-                reader.ReadUInt32();
-                //reader.ReadUInt32();
+                reader.ReadUInt32(); //reader.ReadUInt32();
             }
 
             var startY = reader.ReadInt32() - DataWindow.YMin;
@@ -632,16 +630,14 @@ namespace SharpEXR {
 
             // ZIP Decompression from OPEN EXR C++ library
             // First step reconstruction
-            for (int i = 1; i < unpackedContent.Length; ++i)
-            {
+            for (int i = 1; i < unpackedContent.Length; ++i) {
                 int reconstructedScaler = (int)unpackedContent[i - 1] + (int)unpackedContent[i] - 128;
                 unpackedContent[i] = (byte)reconstructedScaler;
             }
 
             // Second Step interleaving
             byte[] interleavedData = new byte[unpackedContent.Length];
-            for (int i = 0; i < unpackedContent.Length/2; ++i)
-            { 
+            for (int i = 0; i < unpackedContent.Length/2; ++i) { 
                 interleavedData[i*2] = unpackedContent[i];
                 interleavedData[i*2 + 1] = unpackedContent[(i + (unpackedContent.Length + 1) / 2)];
             }
@@ -653,10 +649,8 @@ namespace SharpEXR {
             
             int index = 0;
 
-            for (int i = 0; i < sortedChannels.Count && index < interleavedData.Length ;  ++i)
-            {
-                for (int j = 0; j < (endY - startY) && index < interleavedData.Length; ++j)
-                {
+            for (int i = 0; i < sortedChannels.Count && index < interleavedData.Length ;  ++i) {
+                for (int j = 0; j < (endY - startY) && index < interleavedData.Length; ++j) {
                     Array.Copy(interleavedData, i * pixelsPerChannelPerScanLine + j * pixelsPerScanLine, channelSortedData, index, pixelsPerChannelPerScanLine);
                     index = index + pixelsPerChannelPerScanLine;
                 }
@@ -677,8 +671,8 @@ namespace SharpEXR {
 
             if (Version.IsMultiPart) {
                 // we don't use this. should we? i dunno. probably not
-                reader.ReadUInt32(); 
-                //reader.ReadUInt32();
+                // Change for multipart : not sure why 8 bytes are read here earlier.
+                reader.ReadUInt32(); //reader.ReadUInt32();
             }
 
             var startY = reader.ReadInt32() - DataWindow.YMin;
@@ -687,8 +681,7 @@ namespace SharpEXR {
 
             var dataSize = reader.ReadInt32();
 
-            if (Header.Compression != EXRCompression.None )
-            {
+            if (Header.Compression != EXRCompression.None ) {
                 throw new NotImplementedException("Compressed images are currently not supported");
             }
 
@@ -743,17 +736,13 @@ namespace SharpEXR {
             //}));
             //Parallel.Invoke(actions.ToArray());
 
-            if (Header.Compression == EXRCompression.ZIP || Header.Compression == EXRCompression.ZIPS)
-            {
-                foreach (var offset in Offsets)
-                {
+            if (Header.Compression == EXRCompression.ZIP || Header.Compression == EXRCompression.ZIPS) {
+                foreach (var offset in Offsets) {
                     ReadZIPCompressedPixelBlock(reader, offset, linesPerBlock, sortedChannels);
                 }
             }
-            else if (Header.Compression == EXRCompression.None)
-            {
-                foreach (var offset in Offsets)
-                {
+            else if (Header.Compression == EXRCompression.None) {
+                foreach (var offset in Offsets) {
                     ReadPixelBlock(reader, offset, linesPerBlock, sortedChannels);
                 }
             }
@@ -778,42 +767,33 @@ namespace SharpEXR {
                     , int startY
                     , int endY
                     , int startIndex
-                    , List<Channel> sortedChannels)
-        {
-            foreach (var channel in sortedChannels)
-            {
+                    , List<Channel> sortedChannels) {
+
+            foreach (var channel in sortedChannels) {
+
                 float[] floatArr = null;
                 Half[] halfArr = null;
 
-                if (channel.Type == PixelType.Float)
-                {
+                if (channel.Type == PixelType.Float) {
                     floatArr = FloatChannels[channel.Name];
                 }
-                else if (channel.Type == PixelType.Half)
-                {
+                else if (channel.Type == PixelType.Half) {
                     halfArr = HalfChannels[channel.Name];
                 }
-                else
-                {
+                else {
                     throw new NotImplementedException();
                 }
 
-
                 var index = startIndex;
-                for (int y = startY; y < endY; y++)
-                {
-                    for (int x = 0; x < DataWindow.Width; x++, index++)
-                    {
-                        if (channel.Type == PixelType.Float)
-                        {
+                for (int y = startY; y < endY; y++) {
+                    for (int x = 0; x < DataWindow.Width; x++, index++) {
+                        if (channel.Type == PixelType.Float) {
                             floatArr[index] = reader.ReadSingle();
                         }
-                        else if (channel.Type == PixelType.Half)
-                        {
+                        else if (channel.Type == PixelType.Half) {
                             halfArr[index] = reader.ReadHalf();
                         }
-                        else
-                        {
+                        else {
                             throw new NotImplementedException();
                         }
                     }
