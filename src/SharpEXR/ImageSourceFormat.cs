@@ -9,6 +9,8 @@ namespace SharpEXR {
         SingleRGBA,
         HalfRGBA,
         SingleRGB,
-        HalfRGB
+        HalfRGB,
+        SingleLuminance,
+        HalfLuminance,
     }
 }

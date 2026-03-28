@@ -124,8 +124,7 @@ namespace SharpEXR {
             }
 
             var bytesPerPixel = EXRFile.GetBytesPerPixel(destFormat);
-            var channelCount =
-                srcFormat == ImageSourceFormat.SingleRGB || srcFormat == ImageSourceFormat.HalfRGB ? 3 : 4;
+            var channelCount = GetChannelCount(srcFormat);
 
             var bytes = GetBytes(srcFormat, destFormat, gamma, DataWindow.Width * bytesPerPixel);
             Half[] halfs = new Half[bytes.Length / 2];
@@ -152,6 +151,14 @@ namespace SharpEXR {
             }
             else if (FloatChannels.ContainsKey("R") && FloatChannels.ContainsKey("G") && FloatChannels.ContainsKey("B")) {
                 srcFormat = includeAlpha ? ImageSourceFormat.SingleRGBA : ImageSourceFormat.SingleRGB;
+            }
+            else if (HalfChannels.ContainsKey("Y") && HalfChannels.Count == 1)
+            {
+                srcFormat = ImageSourceFormat.HalfLuminance;
+            }
+            else if (FloatChannels.ContainsKey("Y") && FloatChannels.Count == 1)
+            {
+                srcFormat = ImageSourceFormat.SingleLuminance;
             }
             else {
                 throw new EXRFormatException("Unrecognized EXR image format, did not contain half/single RGB color channels");
@@ -183,8 +190,7 @@ namespace SharpEXR {
             }
 
             var bytesPerPixel = EXRFile.GetBytesPerPixel(destFormat);
-            var channelCount = 
-                srcFormat == ImageSourceFormat.SingleRGB || srcFormat == ImageSourceFormat.HalfRGB ? 3 : 4;
+            var channelCount = GetChannelCount(srcFormat);
 
             var bytes = GetBytes(srcFormat, destFormat, gamma, DataWindow.Width * bytesPerPixel);
             float[] floats = new float[bytes.Length / sizeof(float)];
@@ -204,7 +210,15 @@ namespace SharpEXR {
             else if (FloatChannels.ContainsKey("R") && FloatChannels.ContainsKey("G") && FloatChannels.ContainsKey("B")) {
                 srcFormat = FloatChannels.ContainsKey("A") ? ImageSourceFormat.SingleRGBA : ImageSourceFormat.SingleRGB;
             }
-            else {
+            else if (HalfChannels.ContainsKey("Y") && HalfChannels.Count == 1) {
+                srcFormat = ImageSourceFormat.HalfLuminance;
+            }
+            else if (FloatChannels.ContainsKey("Y") && FloatChannels.Count == 1)
+            {
+                srcFormat = ImageSourceFormat.SingleLuminance;
+            }
+            else
+            {
                 throw new EXRFormatException("Unrecognized EXR image format, did not contain half/single RGB color channels");
             }
             return GetBytes(srcFormat, destFormat, gamma, stride);
@@ -266,47 +280,81 @@ namespace SharpEXR {
             fr = fg = fb = fa = null;
 
             if (isHalf) {
-                if (!HalfChannels.ContainsKey("R")) {
-                    throw new ArgumentException("Half type channel R not found", "srcFormat");
-                }
-                if (!HalfChannels.ContainsKey("G")) {
-                    throw new ArgumentException("Half type channel G not found", "srcFormat");
-                }
-                if (!HalfChannels.ContainsKey("B")) {
-                    throw new ArgumentException("Half type channel B not found", "srcFormat");
-                }
-                hr = HalfChannels["R"];
-                hg = HalfChannels["G"];
-                hb = HalfChannels["B"];
-
-                if (srcFormat == ImageSourceFormat.HalfRGBA) {
-                    if (!HalfChannels.ContainsKey("A")) {
-                        throw new ArgumentException("Half type channel A not found", "srcFormat");
+                if (srcFormat == ImageSourceFormat.SingleLuminance)
+                {
+                    if (!FloatChannels.ContainsKey("Y"))
+                    {
+                        throw new ArgumentException("Single type channel Y not found", "srcFormat");
                     }
-                    ha = HalfChannels["A"];
-                    sourceAlpha = true;
+                    hb = hg = hr = HalfChannels["Y"];
+                    sourceAlpha = false;
+                }
+                else
+                {
+                    if (!HalfChannels.ContainsKey("R"))
+                    {
+                        throw new ArgumentException("Half type channel R not found", "srcFormat");
+                    }
+                    if (!HalfChannels.ContainsKey("G"))
+                    {
+                        throw new ArgumentException("Half type channel G not found", "srcFormat");
+                    }
+                    if (!HalfChannels.ContainsKey("B"))
+                    {
+                        throw new ArgumentException("Half type channel B not found", "srcFormat");
+                    }
+                    hr = HalfChannels["R"];
+                    hg = HalfChannels["G"];
+                    hb = HalfChannels["B"];
+
+                    if (srcFormat == ImageSourceFormat.HalfRGBA)
+                    {
+                        if (!HalfChannels.ContainsKey("A"))
+                        {
+                            throw new ArgumentException("Half type channel A not found", "srcFormat");
+                        }
+                        ha = HalfChannels["A"];
+                        sourceAlpha = true;
+                    }
                 }
             }
             else {
-                if (!FloatChannels.ContainsKey("R")) {
-                    throw new ArgumentException("Single type channel R not found", "srcFormat");
-                }
-                if (!FloatChannels.ContainsKey("G")) {
-                    throw new ArgumentException("Single type channel G not found", "srcFormat");
-                }
-                if (!FloatChannels.ContainsKey("B")) {
-                    throw new ArgumentException("Single type channel B not found", "srcFormat");
-                }
-                fr = FloatChannels["R"];
-                fg = FloatChannels["G"];
-                fb = FloatChannels["B"];
-
-                if (srcFormat == ImageSourceFormat.HalfRGBA) {
-                    if (!FloatChannels.ContainsKey("A")) {
-                        throw new ArgumentException("Single type channel A not found", "srcFormat");
+                if (srcFormat == ImageSourceFormat.SingleLuminance)
+                {
+                    if (!FloatChannels.ContainsKey("Y"))
+                    {
+                        throw new ArgumentException("Single type channel Y not found", "srcFormat");
                     }
-                    fa = FloatChannels["A"];
-                    sourceAlpha = true;
+                    fb = fg = fr = FloatChannels["Y"];
+                    sourceAlpha = false;
+                }
+                else
+                {
+                    if (!FloatChannels.ContainsKey("R"))
+                    {
+                        throw new ArgumentException("Single type channel R not found", "srcFormat");
+                    }
+                    if (!FloatChannels.ContainsKey("G"))
+                    {
+                        throw new ArgumentException("Single type channel G not found", "srcFormat");
+                    }
+                    if (!FloatChannels.ContainsKey("B"))
+                    {
+                        throw new ArgumentException("Single type channel B not found", "srcFormat");
+                    }
+                    fr = FloatChannels["R"];
+                    fg = FloatChannels["G"];
+                    fb = FloatChannels["B"];
+
+                    if (srcFormat == ImageSourceFormat.HalfRGBA)
+                    {
+                        if (!FloatChannels.ContainsKey("A"))
+                        {
+                            throw new ArgumentException("Single type channel A not found", "srcFormat");
+                        }
+                        fa = FloatChannels["A"];
+                        sourceAlpha = true;
+                    }
                 }
             }
 
@@ -605,6 +653,27 @@ namespace SharpEXR {
         public void Open(IEXRReader reader) {
             hasData = true;
             ReadPixelData(reader);
+        }
+
+        private int GetChannelCount(ImageSourceFormat srcFormat)
+        {
+            switch (srcFormat)
+            {
+                case ImageSourceFormat.HalfRGBA:
+                case ImageSourceFormat.SingleRGBA:
+                    return 4;
+                    break;
+                case ImageSourceFormat.HalfRGB:
+                case ImageSourceFormat.SingleRGB:
+                    return 3;
+                    break;
+                case ImageSourceFormat.HalfLuminance:
+                case ImageSourceFormat.SingleLuminance:
+                    return 1;
+                    break;
+                default:
+                    throw new ArgumentException("Unrecognized source format", "srcFormat");
+            }
         }
 
         private void ReadPixelBlock(IEXRReader reader, uint offset, int linesPerBlock, List<Channel> sortedChannels) {
